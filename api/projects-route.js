@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Projects = require("../data/helpers/projectModel");
+const Actions = require("../data/helpers/actionModel");
 
 router.use(express.json());
 
@@ -57,7 +58,13 @@ router.get("/:id", validateProjectId, (req, res) => {
 router.get("/:id/actions", validateProjectId, (req, res) => {
   Projects.getProjectActions(req.params.id)
     .then(response => {
-      res.status(200).json(response);
+      if (response.length > 0) {
+        res.status(200).json(response);
+      } else {
+        res
+          .status(404)
+          .json({ error: "No actions were found for the specified ID." });
+      }
     })
     .catch(error => {
       console.log(error);
@@ -79,8 +86,27 @@ router.post("/", validProjectAdd, (req, res) => {
     });
 });
 
+//
+router.post("/:id", validateProjectId, (req, res) => {
+  //   const projectId = req.params.id;
+  //   const newAction = req.body;
+  //   const actionObject = [{ ...newAction, project_id: projectId }];
+  //   res.send(projectId);
+
+  Actions.insert(actionObject)
+    .then(response => {
+      res.status(201).json(response);
+    })
+    .catch(error => {
+      console.log(error);
+      res
+        .status(500)
+        .json({ error: "Unable to add a new action to the specified ID." });
+    });
+});
+
 // Deletes the project ID from the DB
-router.delete("/:id", validateProjectId, (req, res) => {
+router.delete("/:id", [validateProjectId], (req, res) => {
   const deletedProject = [{ ...req.response }];
 
   Projects.remove(req.params.id)
